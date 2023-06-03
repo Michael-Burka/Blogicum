@@ -1,34 +1,73 @@
+from django.views.generic import (
+    CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
+)
+from django.core.paginator import Paginator
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render
 from django.http import Http404
+
 from blog.models import Post, Category
 
 
-def index(request):
-    template = 'blog/index.html'
-    num_posts_to_display = 5
-    post_list = (
-        Post.objects.published()
-        .order_by('-pub_date')[:num_posts_to_display]
-    )
-    context = {'post_list': post_list}
-    return render(request, template, context)
+class IndexListView(ListView):
+    model = Post
+    template_name = 'blog/index.html'
+    context_object_name = 'post_list'
+    ordering = ['-pub_date']
+    paginate_by = 10
+
+    def get_queryset(self):
+        return self.model.objects.published()
 
 
-def post_detail(request, pk):
-    template = 'blog/detail.html'
-    post = get_object_or_404(Post.objects.published(), pk=pk)
-    context = {'post': post}
-    return render(request, template, context)
+class PostDetailView(DetailView):
+    model = Post
+    template_name = 'blog/detail.html'
+    context_object_name = 'post'
+
+    def get_queryset(self):
+        return self.model.objects.published()
 
 
-def category_posts(request, category_slug):
-    template = 'blog/category.html'
-    category = get_object_or_404(Category, slug=category_slug)
-    if not category.is_published:
-        raise Http404
-    post_list = Post.objects.published().filter(category=category)
-    context = {
-        'post_list': post_list,
-        'category': category,
-       }
-    return render(request, template, context)
+class CategoryListView(ListView):
+    model = Post
+    template_name = 'blog/category.html'
+    context_object_name = 'post_list'
+    paginate_by = 10
+
+    def get_queryset(self):
+        category_slug = self.kwargs.get('category_slug')
+        category = get_object_or_404(Category, slug=category_slug)
+        if not category.is_published:
+            raise Http404
+        return Post.objects.published().filter(category=category)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        category_slug = self.kwargs.get('category_slug')
+        context['category'] = get_object_or_404(Category, slug=category_slug)
+        return context
+
+
+class ProfileListView(ListView):
+    model = Post
+    template_name = 'blog/profile.html'
+    context_object_name = 'page_obj'
+    paginate_by = 10
+    ordering = '-pub_date'
+
+    def get_queryset(self):
+        username = self.kwargs.get('username')
+        user = get_object_or_404(User, username=username)
+        return (Post.objects.filter(author=user)
+                .select_related('author')
+                .order_by(self.ordering))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        username = self.kwargs.get('username')
+        context['profile'] = get_object_or_404(User, username=username)
+        paginator = Paginator(self.get_queryset(), self.paginate_by)
+        context['page_obj'] = paginator.get_page(self.request.GET.get('page'))
+        return context
