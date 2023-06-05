@@ -60,7 +60,11 @@ class Post(PublishedModel):
         related_name='posts',
         verbose_name='Категория'
     )
-
+    image = models.ImageField(
+        blank=True,
+        upload_to='posts_images',
+        verbose_name='Фото'
+    )
     objects = PostManager()
 
     class Meta:
