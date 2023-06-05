@@ -3,11 +3,15 @@ from django.views.generic import (
 )
 from django.core.paginator import Paginator
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404, render
-from django.http import Http404
+from django.http import Http404, HttpResponseForbidden
+from django.urls import reverse, reverse_lazy
 
 from blog.models import Post, Category
+
+
+User = get_user_model()
 
 
 class IndexListView(ListView):
@@ -16,25 +20,20 @@ class IndexListView(ListView):
     context_object_name = 'post_list'
     ordering = ['-pub_date']
     paginate_by = 10
-
-    def get_queryset(self):
-        return self.model.objects.published()
+    queryset = model.objects.published()
 
 
 class PostDetailView(DetailView):
     model = Post
     template_name = 'blog/detail.html'
-    context_object_name = 'post'
-
-    def get_queryset(self):
-        return self.model.objects.published()
+    queryset = model.objects.published()
 
 
 class CategoryListView(ListView):
     model = Post
     template_name = 'blog/category.html'
-    context_object_name = 'post_list'
     paginate_by = 10
+    ordering = ['-pub_date']
 
     def get_queryset(self):
         category_slug = self.kwargs.get('category_slug')
@@ -71,3 +70,24 @@ class ProfileListView(ListView):
         paginator = Paginator(self.get_queryset(), self.paginate_by)
         context['page_obj'] = paginator.get_page(self.request.GET.get('page'))
         return context
+
+
+class ProfileUpdateView(LoginRequiredMixin, UpdateView):
+    model = User
+    template_name = 'blog/user.html'
+    fields = ['first_name', 'last_name', 'username', 'email']
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def dispatch(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance != request.user:
+            return HttpResponseForbidden()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse_lazy(
+            'blog:profile',
+            kwargs={'username': self.request.user.username}
+        )
