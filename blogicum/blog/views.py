@@ -8,8 +8,8 @@ from django.shortcuts import get_object_or_404, render
 from django.http import Http404, HttpResponseForbidden
 from django.urls import reverse, reverse_lazy
 
-from blog.models import Post, Category
-
+from .models import Post, Category
+from .forms import CreatePostForm
 
 User = get_user_model()
 
@@ -91,3 +91,17 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
             'blog:profile',
             kwargs={'username': self.request.user.username}
         )
+
+
+class PostCreateView(LoginRequiredMixin, CreateView):
+    model = Post
+    form_class = CreatePostForm
+    template_name = 'blog/create.html'
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        username = self.request.user.username
+        return reverse('blog:profile', kwargs={'username': username})
