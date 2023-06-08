@@ -32,7 +32,10 @@ class IndexListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['page_obj'] = context['paginator'].get_page(self.request.GET.get('page'))
+        context['page_obj'] = (
+            context['paginator']
+            .get_page(self.request.GET.get('page')
+        )
         return context
 
 
@@ -213,7 +216,9 @@ class CommentMixin(LoginRequiredMixin):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse_lazy('blog:post_detail', kwargs={'pk': self.kwargs['pk']})
+        return reverse_lazy(
+            'blog:post_detail', kwargs={'pk': self.kwargs['pk']}
+        )
 
 
 class CommentUpdateView(CommentMixin, UpdateView):
