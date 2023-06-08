@@ -34,8 +34,7 @@ class IndexListView(ListView):
         context = super().get_context_data(**kwargs)
         context['page_obj'] = (
             context['paginator']
-            .get_page(self.request.GET.get('page')
-        )
+            .get_page(self.request.GET.get('page')))
         return context
 
 
