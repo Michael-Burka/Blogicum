@@ -1,5 +1,6 @@
-from django.db import models
 from django.contrib.auth import get_user_model
+from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 
 from core.models import PublishedModel
@@ -70,6 +71,8 @@ class Post(PublishedModel):
     class Meta:
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
+        default_related_name = 'posts'
+        ordering = ['-pub_date']
 
     def __str__(self):
         return self.title
@@ -108,3 +111,23 @@ class Location(PublishedModel):
 
     def __str__(self):
         return self.name
+
+
+class Comment(models.Model):
+    text = models.TextField('Комментарий')
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        related_name='comments',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ('created_at',)
+
+    def __str__(self):
+        return f'Comment by {self.author.username}'
+
+    def get_absolute_url(self):
+        return reverse('blog:post_detail', args=[self.post.id])
