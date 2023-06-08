@@ -34,7 +34,8 @@ class IndexListView(ListView):
         context = super().get_context_data(**kwargs)
         context['page_obj'] = (
             context['paginator']
-            .get_page(self.request.GET.get('page')))
+            .get_page(self.request.GET.get('page'))
+        )
         return context
 
 
@@ -64,7 +65,8 @@ class CategoryListView(ListView):
         queryset = (
             Post.objects.published()
             .filter(category=category, is_published=True)
-            ).order_by('-pub_date').annotate(comment_count=Count('comments'))
+            .order_by('-pub_date').annotate(comment_count=Count('comments'))
+        )
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -83,11 +85,12 @@ class ProfileListView(ListView):
     def get_queryset(self):
         username = self.kwargs.get('username')
         user = get_object_or_404(User, username=username)
-        return (Post.objects.filter(author=user)
-                .select_related('author')
-                .order_by('-pub_date')
-                .annotate(comment_count=Count('comments'))
-                )
+        return (
+            Post.objects.filter(author=user)
+            .select_related('author')
+            .order_by('-pub_date')
+            .annotate(comment_count=Count('comments'))
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -182,7 +185,8 @@ class AddCommentCreateView(CreateView):
 
     def get_success_url(self):
         return reverse_lazy(
-            'blog:post_detail', kwargs={'pk': self.kwargs['pk']})
+            'blog:post_detail', kwargs={'pk': self.kwargs['pk']}
+        )
 
 
 @login_required
