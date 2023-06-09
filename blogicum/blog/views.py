@@ -168,27 +168,6 @@ class PostDeleteView(LoginRequiredMixin, DeleteView):
         return reverse('blog:profile', kwargs={'username': username})
 
 
-class AddCommentCreateView(CreateView):
-    comment = None
-    model = Comment
-    form_class = CommentForm
-    success_url = reverse_lazy('blog:index')
-
-    def dispatch(self, request, *args, **kwargs):
-        self.comment = get_object_or_404(Post, pk=kwargs['pk'])
-        return super().dispatch(request, *args, **kwargs)
-
-    def form_valid(self, form):
-        form.instance.author = self.request.user
-        form.instance.post_id = self.kwargs['pk']
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse_lazy(
-            'blog:post_detail', kwargs={'pk': self.kwargs['pk']}
-        )
-
-
 @login_required
 def add_comment(request, pk):
     comment = get_object_or_404(Post, pk=pk)
