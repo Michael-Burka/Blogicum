@@ -202,26 +202,23 @@ def add_comment(request, pk):
 
 
 class CommentMixin(LoginRequiredMixin):
-    comment = None
     model = Comment
     form_class = CommentForm
     template_name = 'blog/comment.html'
 
     def dispatch(self, request, *args, **kwargs):
-        self.comment = get_object_or_404(Comment, pk=kwargs['pk'])
+        self.comment = get_object_or_404(Comment, pk=kwargs['comment_id'])
         if self.comment.author != self.request.user:
             return HttpResponseForbidden()
         return super().dispatch(request, *args, **kwargs)
 
-    def form_valid(self, form):
-        form.instance.author = self.request.user
-        form.instance.comment = self.comment
-        return super().form_valid(form)
-
     def get_success_url(self):
-        return reverse_lazy(
-            'blog:post_detail', kwargs={'pk': self.kwargs['pk']}
-        )
+        return reverse('blog:post_detail', kwargs={'pk': self.object.post.pk})
+
+    def get_object(self, queryset=None):
+        post_id = self.kwargs.get('pk')
+        comment_id = self.kwargs.get('comment_id')
+        return get_object_or_404(Comment, id=comment_id, post_id=post_id)
 
 
 class CommentUpdateView(CommentMixin, UpdateView):
