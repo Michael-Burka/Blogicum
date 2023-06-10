@@ -6,7 +6,6 @@ from django.db.models import Count
 from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
-from django.utils import timezone
 from django.views.generic import (
     CreateView, DeleteView, DetailView, ListView, UpdateView
 )
@@ -22,13 +21,10 @@ class IndexListView(ListView):
     template_name = 'blog/index.html'
     context_object_name = 'post_list'
     paginate_by = 10
-
-    def get_queryset(self):
-        return Post.objects.filter(
-            is_published=True,
-            category__is_published=True,
-            pub_date__lte=timezone.now()
-        ).order_by('-pub_date').annotate(comment_count=Count('comments'))
+    queryset = (
+        Post.objects.published()
+        .annotate(comment_count=Count('comments'))
+    )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -64,8 +60,7 @@ class CategoryListView(ListView):
             raise Http404
         queryset = (
             Post.objects.published()
-            .filter(category=category, is_published=True)
-            .order_by('-pub_date').annotate(comment_count=Count('comments'))
+            .annotate(comment_count=Count('comments'))
         )
         return queryset
 
@@ -88,7 +83,6 @@ class ProfileListView(ListView):
         return (
             Post.objects.filter(author=user)
             .select_related('author')
-            .order_by('-pub_date')
             .annotate(comment_count=Count('comments'))
         )
 
@@ -108,12 +102,6 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_object(self, queryset=None):
         return self.request.user
-
-    def dispatch(self, request, *args, **kwargs):
-        instance = self.get_object()
-        if instance != request.user:
-            return HttpResponseForbidden()
-        return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
         return reverse_lazy(
