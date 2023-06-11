@@ -80,11 +80,17 @@ class ProfileListView(ListView):
     def get_queryset(self):
         username = self.kwargs.get('username')
         user = get_object_or_404(User, username=username)
-        return (
+        queryset = (
             Post.objects.filter(author=user)
             .select_related('author')
             .annotate(comment_count=Count('comments'))
         )
+        default_ordering = queryset.model._meta.ordering
+
+        if default_ordering:
+            queryset = queryset.order_by(*default_ordering)
+
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
