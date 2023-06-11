@@ -24,7 +24,11 @@ class PostManager(models.Manager):
         return PostQuerySet(self.model, using=self._db)
 
     def published(self):
-        return self.get_queryset().published()
+        queryset = self.get_queryset().published()
+        default_ordering = self.model._meta.ordering
+        if default_ordering:
+            queryset = queryset.order_by(*default_ordering)
+        return queryset
 
 
 class Post(PublishedModel):
