@@ -28,11 +28,6 @@ Blogikum is a comprehensive study project designed to simulate real-world bloggi
 - Achieved a fine balance between user-friendly interfaces and backend complexity, replicating real-world blogging scenarios.
 - Implemented a reusable template structure for various views, ensuring consistency and ease of future updates.
 
-## How to Explore Blogikum
-
-To experience the diverse features of Blogikum:
-- Visit [Blogikum](https://michaelburka.pythonanywhere.com/). Dive into its rich blogging environment, user interactions, and varied functionalities.
-
 ## Feedback and Contact
 
 This project was a learning journey, and feedback is essential for growth. If you have suggestions, inquiries, or just wish to discuss any aspect of this project:
